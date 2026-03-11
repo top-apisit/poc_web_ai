@@ -1,0 +1,255 @@
+{
+  "name": "PRD to Linear Tickets",
+  "description": "Automatically extracts user stories from PRD documents and creates Linear tickets",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Notion Trigger",
+      "type": "n8n-nodes-base.notionTrigger",
+      "position": [250, 300],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "event": "pageUpdatedInDatabase",
+        "databaseId": "={{ $env.NOTION_PRD_DATABASE_ID }}",
+        "filters": {
+          "filter": {
+            "property": "Status",
+            "select": {
+              "equals": "Ready for Development"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Get PRD Content",
+      "type": "n8n-nodes-base.notion",
+      "position": [450, 300],
+      "parameters": {
+        "operation": "getPage",
+        "pageId": "={{ $json.id }}"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Extract User Stories with Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [650, 300],
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2024-01-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-sonnet-4-20250514"
+            },
+            {
+              "name": "max_tokens",
+              "value": 4096
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Extract user stories from this PRD document. For each story, provide:\\n\\n1. title: A concise title\\n2. description: Detailed description with acceptance criteria\\n3. priority: P0 (critical), P1 (high), P2 (medium), P3 (low)\\n4. estimate: 1-8 (story points)\\n5. labels: Array of relevant labels\\n\\nReturn ONLY a valid JSON array, no other text.\\n\\nPRD Content:\\n{{ $json.properties.Content.rich_text[0].plain_text }}\"}]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Parse JSON Response",
+      "type": "n8n-nodes-base.code",
+      "position": [850, 300],
+      "parameters": {
+        "jsCode": "// Extract JSON from Claude's response\nconst response = $input.first().json;\nconst content = response.content[0].text;\n\n// Parse the JSON array of user stories\ntry {\n  const stories = JSON.parse(content);\n  return stories.map(story => ({ json: story }));\n} catch (e) {\n  // Try to extract JSON from markdown code block\n  const match = content.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (match) {\n    const stories = JSON.parse(match[1]);\n    return stories.map(story => ({ json: story }));\n  }\n  throw new Error('Failed to parse user stories: ' + e.message);\n}"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Map Priority to Linear",
+      "type": "n8n-nodes-base.code",
+      "position": [1050, 300],
+      "parameters": {
+        "jsCode": "// Map priority to Linear priority values\nconst priorityMap = {\n  'P0': 1, // Urgent\n  'P1': 2, // High\n  'P2': 3, // Medium\n  'P3': 4  // Low\n};\n\nconst story = $input.first().json;\nreturn [{\n  json: {\n    ...story,\n    linearPriority: priorityMap[story.priority] || 3,\n    linearEstimate: story.estimate || 2\n  }\n}];"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Create Linear Issue",
+      "type": "n8n-nodes-base.linear",
+      "position": [1250, 300],
+      "parameters": {
+        "operation": "create",
+        "teamId": "={{ $env.LINEAR_TEAM_ID }}",
+        "title": "={{ $json.title }}",
+        "description": "={{ $json.description }}",
+        "priority": "={{ $json.linearPriority }}",
+        "estimate": "={{ $json.linearEstimate }}",
+        "labelIds": "={{ $json.labels }}"
+      }
+    },
+    {
+      "id": "7",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.noOp",
+      "position": [1450, 300],
+      "parameters": {}
+    },
+    {
+      "id": "8",
+      "name": "Send Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "position": [1650, 300],
+      "parameters": {
+        "channel": "#dev-team",
+        "text": "📋 *New User Stories Created*\n\nSource PRD: {{ $node['Notion Trigger'].json.properties.Name.title[0].plain_text }}\nStories created: {{ $node['Collect Results'].json.length }}\n\nReview in Linear: https://linear.app/team/{{ $env.LINEAR_TEAM_ID }}"
+      }
+    },
+    {
+      "id": "9",
+      "name": "Update PRD Status",
+      "type": "n8n-nodes-base.notion",
+      "position": [1850, 300],
+      "parameters": {
+        "operation": "update",
+        "pageId": "={{ $node['Notion Trigger'].json.id }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status",
+              "select": "Tickets Created"
+            },
+            {
+              "key": "Tickets Count",
+              "number": "={{ $node['Collect Results'].json.length }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Notion Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get PRD Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PRD Content": {
+      "main": [
+        [
+          {
+            "node": "Extract User Stories with Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract User Stories with Claude": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Response": {
+      "main": [
+        [
+          {
+            "node": "Map Priority to Linear",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Priority to Linear": {
+      "main": [
+        [
+          {
+            "node": "Create Linear Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Linear Issue": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update PRD Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "automation"
+    },
+    {
+      "name": "prd"
+    }
+  ]
+}
