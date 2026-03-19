@@ -99,6 +99,7 @@ ls app/api/<name>/route.ts 2>/dev/null && echo "UPDATE" || echo "NEW"
 ## Mode A — NEW page
 
 **A1.** ตรวจข้อมูล — ขาด Figma link → ขอ, ขาด Confluence → ข้ามได้
+**A1.5** สร้าง branch: `git checkout develop && git pull origin develop && git checkout -b feature/<ticket_id>-<slug>`
 **A2.** Scaffold: `bash .claude/scripts/scaffold-page.sh <Name> <jira_ticket> <figma_link>`
 **A3.** PRE-CHECK — dispatch impl-verifier ด้วย `phase: PRE-CHECK`
 **A3b.** GATE CHECK — handle PRE-CHECK result
@@ -106,16 +107,19 @@ ls app/api/<name>/route.ts 2>/dev/null && echo "UPDATE" || echo "NEW"
 **A4.** รอผล → handle SPEC GAP ถ้ามี
 **A4.5** POST-CHECK — dispatch impl-verifier ด้วย `phase: POST-CHECK`
 **A5.** Time Tracking → Archive
+**A6.** Push branch: `git push -u origin feature/<ticket_id>-<slug>` (แจ้ง dev เปิด PR → develop)
 
 ---
 
 ## Mode B — UPDATE existing page
 
 **B1.** วิเคราะห์ scope → กำหนด agents ที่ต้องใช้
+**B1.5** สร้าง branch: `git checkout develop && git pull origin develop && git checkout -b fix/<ticket_id>-<slug>`
 **B2.** อ่าน existing hooks และ dependencies
 **B3.** Scaffold (update mode)
 **B4.** PRE-CHECK → IMPLEMENT → POST-CHECK
 **B5.** Time Tracking → Archive
+**B6.** Push branch + แจ้ง dev เปิด PR → develop
 
 ---
 
