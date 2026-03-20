@@ -4,7 +4,7 @@
 
 ### Prerequisites
 - [ ] Claude Code CLI installed
-- [ ] React Native project initialized
+- [ ] Next.js project initialized (App Router)
 - [ ] Figma access with design system
 - [ ] Jira/Confluence with API access
 
@@ -15,22 +15,19 @@ cd your-project
 claude init
 
 # Install required dependencies
-npm install nativewind tailwindcss class-variance-authority clsx
-npm install axios react-i18next i18next
-npm install react-native-svg react-native-config
+npm install tailwindcss class-variance-authority clsx
+npm install react-hook-form @hookform/resolvers zod
+npm install zustand
 ```
 
 ### 2. MCP Setup (10 mins)
 Create `.claude/settings.local.json`:
 ```json
 {
-  "enabledPlugins": {
-    "figma@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
-      "mcp__figma-desktop__get_screenshot",
-      "mcp__figma-desktop__get_design_context",
+      "mcp__figma-remote-mcp__get_screenshot",
+      "mcp__figma-remote-mcp__get_design_context",
       "mcp__atlassian__getJiraIssue",
       "mcp__atlassian__getConfluencePage",
       "mcp__atlassian__addWorklogToJiraIssue"
@@ -40,9 +37,9 @@ Create `.claude/settings.local.json`:
 ```
 
 ### 3. Project Structure (5 mins)
-```
+```bash
 mkdir -p .claude/{agents,docs,scripts,templates}
-mkdir -p src/{components/{ui,common},screens,services/{apis,mock},constants,locales}
+mkdir -p src/{app/api,components/{ui,auth,layout},lib/{services,hooks,utils,contexts},types,styles}
 ```
 
 ### 4. Core Agents (10 mins)
@@ -53,7 +50,7 @@ Copy these essential agent configs to `.claude/agents/`:
 ---
 name: orchestrator
 description: Project manager agent. Reads Jira tickets, dispatches specialist agents.
-tools: mcp__jira, mcp__confluence, Read, Bash, Agent
+tools: mcp__atlassian, mcp__figma-remote-mcp, Read, Bash, Agent
 model: claude-sonnet-4-6
 ---
 # Your orchestrator implementation
@@ -63,8 +60,8 @@ model: claude-sonnet-4-6
 ```markdown
 ---
 name: ui-builder
-description: Senior React Native engineer. Figma → React Native UI.
-tools: mcp__plugin_figma_figma-desktop, Read, Write, Edit, Bash
+description: Senior Next.js engineer. Figma → React/Tailwind UI.
+tools: mcp__figma-remote-mcp, Read, Write, Edit, Bash
 model: claude-sonnet-4-6
 ---
 # Your UI builder implementation
@@ -74,8 +71,8 @@ model: claude-sonnet-4-6
 ```markdown
 ---
 name: service-builder
-description: TypeScript service engineer. API specs → TypeScript services.
-tools: mcp__jira, mcp__confluence, Read, Write, Edit, Bash
+description: TypeScript service engineer. API specs → Next.js routes and services.
+tools: mcp__atlassian, Read, Write, Edit, Bash
 model: claude-sonnet-4-6
 ---
 # Your service builder implementation
@@ -87,15 +84,15 @@ model: claude-sonnet-4-6
 ```
 ComponentName/
 ├── ComponentName.tsx      # JSX + logic
-├── ComponentName.styles.ts # StyleSheet + responsive
-├── ComponentName.types.ts  # TypeScript interfaces
+├── ComponentName.types.ts # TypeScript interfaces
+├── ComponentName.test.tsx # Unit tests (optional)
 └── index.ts               # Exports
 ```
 
 ### 2. Agent Zone System
 ```typescript
 // @zone:start:ui-builder:JSX
-// @zone:registry:variables [isVisible, onPress]
+// @zone:registry:variables [isVisible, onClick]
 // UI-specific code here
 // @zone:end:ui-builder:JSX
 
@@ -104,18 +101,22 @@ ComponentName/
 // @zone:end:service-builder:SERVICE_LAYER
 ```
 
-### 3. Mock System Pattern
+### 3. API Route Pattern
 ```typescript
-// src/services/apis/feature.service.ts
-import { Config } from 'react-native-config';
-import { FeatureMock } from '../mock/feature.mock';
+// src/app/api/feature/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { FeatureSchema } from '@/types/feature'
 
-export const getFeatureData = async () => {
-  if (Config.MOCK_FEATURE === 'true') {
-    return FeatureMock.getFeatureData();
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const data = FeatureSchema.parse(body)
+    // Handle request
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
   }
-  return apiClient.get('/feature');
-};
+}
 ```
 
 ## 🎯 Usage Pattern
@@ -137,8 +138,8 @@ export const getFeatureData = async () => {
 ## 📋 First Implementation Test
 
 Create a test Jira ticket with:
-- **Summary**: "Login Screen Implementation"
-- **Labels**: `screen`, `[FE]`
+- **Summary**: "Login Page Implementation"
+- **Labels**: `page`, `[FE]`
 - **Figma link**: `figma_frozen_link: [URL with node-id]`
 - **Confluence**: User story with API specs
 - **Story Points**: 3
@@ -148,7 +149,7 @@ Then run:
 User input: "AUTH-001"
 ```
 
-Expected output: Complete login screen with controller, styles, types, and tests.
+Expected output: Complete login page with form component, API route, auth hook, and types.
 
 ## 🔍 Quality Checks
 
@@ -157,35 +158,37 @@ Expected output: Complete login screen with controller, styles, types, and tests
 # TypeScript check
 npx tsc --noEmit
 
-# Structural validation
-bash .claude/scripts/verify-structural.sh
+# Lint check
+npm run lint
 
 # Zone validation
-bash .claude/scripts/check-zones.sh src/screens/LoginScreen/LoginScreen.tsx ui-builder
+bash .claude/scripts/check-zones.sh src/app/login/page.tsx ui-builder
+
+# Run tests
+npm test
 ```
 
 ### Success Metrics
-- [ ] Code compiles without errors
-- [ ] All user-facing text uses i18n
-- [ ] All interactive elements have testIDs
+- [ ] TypeScript compiles without errors
+- [ ] ESLint passes with no errors
+- [ ] All components have proper TypeScript interfaces
 - [ ] Figma design matches implementation
-- [ ] Mock data covers all test scenarios
-- [ ] iPad responsive layout works
-- [ ] Time tracking logged to Jira
+- [ ] API routes have input validation with Zod
+- [ ] Tests pass for components and hooks
 
 ## ⚠️ Common Gotchas
 
-1. **Figma Access**: Ensure Figma desktop app is running and token is valid
-2. **Zone Conflicts**: Different agents can't modify same code zones
+1. **Figma Access**: Ensure Figma MCP server is connected and token is valid
+2. **Zone Conflicts**: Different agents cannot modify the same code zones
 3. **Spec Gaps**: Agents will stop if specifications are incomplete
 4. **Component Interfaces**: Linked tickets must define shared component contracts
-5. **Mock Coverage**: Must handle all acceptance criteria scenarios
+5. **App Router**: Use `src/app/` directory — not `pages/` — for all routes
 
 ## 🎉 Success Indicators
 
 If setup is correct, you should see:
 - Agents dispatch automatically from ticket numbers
-- Code generation follows strict patterns
+- Code generation follows strict Next.js App Router patterns
 - Quality gates prevent broken implementations
 - Time tracking appears in Jira worklogs
 - Design fidelity matches Figma 1:1
