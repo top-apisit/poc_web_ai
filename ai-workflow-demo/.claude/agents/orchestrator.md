@@ -19,6 +19,30 @@ model: claude-sonnet-4-6
 
 ---
 
+## Sprint Context (Sprint-Aware Mode)
+
+After reading the Jira ticket, extract from the `sprint` field:
+- `sprint.name` (e.g., "Sprint 12")
+- `sprint.id` (Jira integer, globally unique across teams)
+- `sprint.state` (ACTIVE, CLOSED, FUTURE)
+- `sprint.endDate` (ISO format)
+
+**Parallel Sprint Guard:** If `sprint.state = CLOSED` → warn dev before proceeding. Ticket may have moved to a closed sprint.
+
+Display before dispatch:
+```
+📅 Sprint — <sprint.name> (id: <sprint.id>) | State: <sprint.state> | Ends: <sprint.endDate>
+```
+
+**Traceability — add to PR description footer (A6/B6 step):**
+```
+---
+**Sprint:** <sprint.name> | **Sprint ID:** <sprint.id> | **Ends:** <sprint.endDate>
+```
+This makes every PR searchable by sprint in GitHub (Layer 3 of 3-layer audit trail: Jira ticket → PR description → Jira comment).
+
+---
+
 ## Agent Status Logging (บังคับทุก mode)
 
 ### Agent Summary (แสดงก่อน dispatch)
@@ -188,6 +212,7 @@ src/
 ```
 📋 Completion Checklist — <TicketID>
 - [ ] Manifest สร้างแล้ว
+- [ ] Sprint context fetched and added to PR description
 - [ ] Pre-flight checks ผ่าน
 - [ ] PRE-CHECK ผ่าน (.spec.json พร้อม)
 - [ ] Agents IMPLEMENT dispatch ครบ
