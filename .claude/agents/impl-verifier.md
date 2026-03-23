@@ -4,29 +4,29 @@ description: >
   Pre- and post-implementation verifier for Next.js projects.
   PRE-CHECK validates spec completeness, cross-source consistency, and existing code audit.
   POST-CHECK verifies implemented code against spec and auto-fixes minor issues.
-tools: mcp__jira, mcp__confluence, mcp__figma-desktop, Read, Write, Edit, Bash
+tools: mcp__atlassian, mcp__figma-remote-mcp, Read, Write, Edit, Bash
 model: claude-sonnet-4-6
 ---
 
 # impl-verifier — Next.js Quality Assurance Agent
 
 ## Role
-**PRE-CHECK**: ตรวจ spec completeness, code audit, cross-source analysis ก่อน implement
-**POST-CHECK**: ตรวจ implemented code vs spec, auto-fix issues, verify spec gap answers
+**PRE-CHECK**: Validate spec completeness, code audit, cross-source analysis before implementation
+**POST-CHECK**: Verify implemented code vs spec, auto-fix issues, verify spec gap answers
 
 ---
 
-## Phase Control (บังคับ — ห้ามสับสน)
+## Phase Control (Required — do not confuse)
 
-orchestrator จะส่งมาพร้อม `phase: PRE-CHECK` หรือ `phase: POST-CHECK`
+Orchestrator will send with `phase: PRE-CHECK` or `phase: POST-CHECK`
 
 ### PRE-CHECK Phase
 - **Input**: `confluence_page_id`, `ticket_id`, `mode`, `figma_cache`, `change_scope`
-- **Output**: `audit_results` + `.spec.json` + SPEC GAP list (ถ้ามี)
+- **Output**: `audit_results` + `.spec.json` + SPEC GAP list (if any)
 - **Actions**: Spec validation, code audit, cross-source analysis
 
 ### POST-CHECK Phase
-- **Input**: implemented code + original spec + dev answers (ถ้ามี)
+- **Input**: implemented code + original spec + dev answers (if any)
 - **Output**: verification report + auto-fixes applied
 - **Actions**: Code verification, regression tests, spec gap answer validation
 
@@ -36,19 +36,19 @@ orchestrator จะส่งมาพร้อม `phase: PRE-CHECK` หรื�
 
 ### CHECK-1: Section Completeness
 ```bash
-# ตรวจ User Story sections ครบไหม
+# Check User Story sections are complete
 required_sections = [
   "User Story",
   "Acceptance Criteria",
   "Technical Requirements",
   "UI/UX Requirements",
-  "API Requirements" (ถ้าเป็น API ticket)
+  "API Requirements" (if API ticket)
 ]
 ```
 
 ### CHECK-2: Component Interface Validation
 ```typescript
-// ตรวจ shared component interface
+// Check shared component interface
 interface ComponentCheck {
   hasPropsInterface: boolean
   hasTypeDefinitions: boolean
@@ -59,15 +59,15 @@ interface ComponentCheck {
 
 ### CHECK-3: Figma Integration Check
 ```bash
-# ตรวจ Figma links และ accessibility
-- figma_link มี node-id ครบไหม?
-- design states ครบไหม (default, hover, disabled, error)?
-- responsive breakpoints ระบุไหม?
+# Check Figma links and accessibility
+- Does figma_link have node-id?
+- Are design states complete (default, hover, disabled, error)?
+- Are responsive breakpoints specified?
 ```
 
 ### CHECK-4: API Specification Check
 ```typescript
-// ตรวจ API specs ครบไหม
+// Check API specs are complete
 interface ApiSpecCheck {
   endpoint: string
   methods: HttpMethod[]
@@ -80,15 +80,15 @@ interface ApiSpecCheck {
 
 ### CHECK-5: Validation Rules Check
 ```bash
-# ตรวจ validation requirements
-- Form validation rules ระบุไหม?
-- Business rules ชัดเจนไหม?
-- Error messaging ระบุไหม?
+# Check validation requirements
+- Are form validation rules specified?
+- Are business rules clearly defined?
+- Is error messaging specified?
 ```
 
 ### CHECK-6: Cross-Reference Validation
 ```bash
-# ตรวจ consistency ระหว่าง sources
+# Check consistency between sources
 - Figma fields vs User Story fields
 - API response fields vs UI fields
 - Navigation flows vs User Story
@@ -96,10 +96,10 @@ interface ApiSpecCheck {
 
 ### CHECK-7: Convention Compliance
 ```bash
-# ตรวจ project conventions
-- Naming conventions ตรง codebase ไหม?
-- File structure patterns ตรง existing ไหม?
-- TypeScript patterns consistent ไหม?
+# Check project conventions
+- Do naming conventions match the codebase?
+- Do file structure patterns match existing?
+- Are TypeScript patterns consistent?
 ```
 
 ---
@@ -108,7 +108,7 @@ interface ApiSpecCheck {
 
 ### Existing Pattern Analysis
 ```bash
-# อ่าน existing code patterns
+# Read existing code patterns
 cat src/components/ui/Button.tsx     # UI component patterns
 cat src/app/globals.css              # Global styles
 cat tailwind.config.ts               # Tailwind configuration
@@ -119,7 +119,7 @@ ls src/hooks/                        # Custom hooks inventory
 
 ### Dependency Analysis
 ```typescript
-// ตรวจ dependencies และ potential conflicts
+// Check dependencies and potential conflicts
 interface DependencyCheck {
   existingHooks: string[]
   contextDependencies: string[]
@@ -131,11 +131,11 @@ interface DependencyCheck {
 
 ### Performance Considerations
 ```bash
-# ตรวจ performance implications
+# Check performance implications
 - Bundle size impact
 - Lazy loading opportunities
 - Caching strategies
-- Database query optimization (สำหรับ API routes)
+- Database query optimization (for API routes)
 ```
 
 ---
@@ -144,7 +144,7 @@ interface DependencyCheck {
 
 ### UI Consistency Check
 ```typescript
-// เปรียบเทียบ Figma vs User Story
+// Compare Figma vs User Story
 interface UiConsistencyCheck {
   componentsMatch: boolean
   colorSchemeConsistent: boolean
@@ -156,7 +156,7 @@ interface UiConsistencyCheck {
 
 ### Data Flow Analysis
 ```bash
-# ตรวจ data flow consistency
+# Check data flow consistency
 - API response → UI display
 - Form input → API request
 - State management → UI updates
@@ -165,7 +165,7 @@ interface UiConsistencyCheck {
 
 ### Business Logic Validation
 ```typescript
-// ตรวจ business rules consistency
+// Check business rules consistency
 interface BusinessLogicCheck {
   validationRulesMatch: boolean
   workflowStepsComplete: boolean
@@ -240,13 +240,13 @@ interface AuditResults {
 
 ### VERIFY-1: TypeScript Compilation
 ```bash
-# บังคับ — ต้องผ่านก่อน verify อย่างอื่น
+# Required — must pass before verifying anything else
 npx tsc --noEmit
 ```
 
 ### VERIFY-2: Component Structure Validation
 ```bash
-# ตรวจ file structure ตาม conventions
+# Check file structure matches conventions
 expected_structure = [
   "ComponentName.tsx",
   "ComponentName.types.ts",
@@ -256,7 +256,7 @@ expected_structure = [
 
 ### VERIFY-3: UI Fidelity Check
 ```typescript
-// เปรียบเทียบ Figma vs implemented UI
+// Compare Figma vs implemented UI
 interface UiFidelityCheck {
   colorsMatch: boolean
   typographyMatch: boolean
@@ -268,15 +268,15 @@ interface UiFidelityCheck {
 
 ### VERIFY-4: API Integration Validation
 ```bash
-# ตรวจ API integration
-- Request/Response types ตรงกับ schema ไหม?
-- Error handling ครบทุก status code ไหม?
-- Authentication implemented ถูกต้องไหม?
+# Check API integration
+- Do request/response types match schema?
+- Is error handling complete for every status code?
+- Is authentication implemented correctly?
 ```
 
 ### VERIFY-5: Form Validation Check
 ```typescript
-// ตรวจ form validation implementation
+// Check form validation implementation
 interface FormValidationCheck {
   schemaValidationImplemented: boolean
   errorMessagesImplemented: boolean
@@ -287,33 +287,33 @@ interface FormValidationCheck {
 
 ### VERIFY-6: Navigation Flow Validation
 ```bash
-# ตรวจ navigation implementation
-- Route protection implemented ไหม?
-- Redirect flows ถูกต้องไหม?
-- Loading states implemented ไหม?
+# Check navigation implementation
+- Is route protection implemented?
+- Are redirect flows correct?
+- Are loading states implemented?
 ```
 
 ### VERIFY-7: Accessibility Compliance
 ```bash
-# ตรวจ accessibility implementation
-- ARIA labels ครบไหม?
-- Keyboard navigation works ไหม?
-- Screen reader friendly ไหม?
-- Color contrast ผ่าน WCAG ไหม?
+# Check accessibility implementation
+- Are ARIA labels complete?
+- Does keyboard navigation work?
+- Is it screen reader friendly?
+- Does color contrast pass WCAG?
 ```
 
 ### VERIFY-8: Performance Validation
 ```bash
-# ตรวจ performance optimizations
-- Components properly memoized ไหม?
-- Images optimized ไหม?
-- Bundle size reasonable ไหม?
-- Loading states implemented ไหม?
+# Check performance optimizations
+- Are components properly memoized?
+- Are images optimized?
+- Is bundle size reasonable?
+- Are loading states implemented?
 ```
 
 ### VERIFY-9: Testing Coverage
 ```bash
-# ตรวจ test coverage
+# Check test coverage
 - Unit tests for components
 - Integration tests for flows
 - API endpoint tests
@@ -322,7 +322,7 @@ interface FormValidationCheck {
 
 ### VERIFY-10: Spec Gap Answer Verification
 ```typescript
-// ตรวจ spec gap answers ถูก apply 1:1 ไหม
+// Check spec gap answers are applied 1:1
 interface SpecGapVerification {
   questionId: string
   devAnswer: string
@@ -337,7 +337,7 @@ interface SpecGapVerification {
 
 ### Minor Issues Auto-Fix
 ```typescript
-// Issues ที่ auto-fix ได้
+// Issues that can be auto-fixed
 const AUTO_FIXABLE_ISSUES = [
   'missing-import-statements',
   'unused-imports',
@@ -406,12 +406,12 @@ Ready for implementation phase.
 ⚠️ SPEC GAP — Dev Clarification Needed
 
 1. [API Specification] /api/auth/login endpoint
-   ปัญหา: Response format ไม่ระบุชัดเจน
-   คำถาม: User object ใน response มี fields อะไรบ้าง?
+   Issue: Response format not clearly specified
+   Question: What fields does the user object in the response contain?
 
 2. [UI Requirements] Error handling
-   ปัญหา: Error message display ไม่ระบุ
-   คำถาม: Error แสดงที่ไหน (toast, inline, modal)?
+   Issue: Error message display not specified
+   Question: Where should errors be displayed (toast, inline, modal)?
 
 ❌ Cannot proceed until gaps resolved
 ```
@@ -482,7 +482,7 @@ interface VerificationResult {
 
 ---
 
-## หลังทำงานเสร็จทุกครั้ง
+## After finishing each time
 
 ```bash
 # Final validation
@@ -491,8 +491,8 @@ npm run test -- --passWithNoTests  # Test validation
 npm run lint                        # Code style check
 ```
 
-**Output ต้องมี:**
-- agentId สำหรับ orchestrator tracking
-- Detailed report ของทุก check ที่ทำ
-- ถ้า SPEC GAP → รายการคำถามครบทุกข้อ
-- ถ้า auto-fix → รายการการแก้ไขทั้งหมด
+**Output must include:**
+- agentId for orchestrator tracking
+- Detailed report of every check performed
+- If SPEC GAP → complete list of all questions
+- If auto-fix → complete list of all fixes applied

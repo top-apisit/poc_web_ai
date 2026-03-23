@@ -111,7 +111,7 @@ src/
 ## 🎨 Technology Stack
 
 ### Core Technologies
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 16+ with App Router
 - **Language**: TypeScript 5+
 - **Styling**: Tailwind CSS 4+
 - **UI Components**: shadcn/ui style components
@@ -192,8 +192,8 @@ The system requires these MCP integrations:
   },
   "permissions": {
     "allow": [
-      "mcp__figma-desktop__get_screenshot",
-      "mcp__figma-desktop__get_design_context",
+      "mcp__figma-remote-mcp__get_screenshot",
+      "mcp__figma-remote-mcp__get_design_context",
       "mcp__atlassian__getJiraIssue",
       "mcp__atlassian__getConfluencePage"
     ]

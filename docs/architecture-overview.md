@@ -44,8 +44,8 @@
 │  │                                                                    │    │
 │  │  ✅ Spec Validation    ✅ Code Audit     ✅ Cross-Source Analysis   │    │
 │  │  ├─ Section complete   ├─ Font patterns  ├─ Figma vs User Story    │    │
-│  │  ├─ i18n keys exist    ├─ Color constants├─ API vs UI fields       │    │
-│  │  ├─ testID format      ├─ Component usage├─ Validation rules       │    │
+│  │  ├─ testID format      ├─ Color constants├─ API vs UI fields       │    │
+│  │  ├─ Convention match   ├─ Component usage├─ Validation rules       │    │
 │  │  └─ Convention match   └─ Context patterns└─ Navigation flow       │    │
 │  └─────────────────────────────────┬───────────────────────────────────┘    │
 │                                    │                                       │
@@ -56,7 +56,7 @@
 │  │                   │   │                   │   │                   │     │
 │  │ Figma → React     │   │ API → TypeScript  │   │ Stories → Logic   │     │
 │  │ ├─ JSX components │   │ ├─ Service files  │   │ ├─ Hooks & state  │     │
-│  │ ├─ NativeWind CSS │   │ ├─ Type definitions│   │ ├─ Validation     │     │
+│  │ ├─ Tailwind CSS  │   │ ├─ Type definitions│   │ ├─ Validation     │     │
 │  │ ├─ Responsive     │   │ ├─ Mock data      │   │ ├─ Navigation     │     │
 │  │ └─ Asset handling │   │ └─ Error handling │   │ └─ Business logic │     │
 │  └─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘     │
@@ -93,8 +93,7 @@
 │  ├─ 📱 Screen Components (JSX + Controller + Styles + Types)                │
 │  ├─ 🔧 Service Layer (API calls + Mock data + TypeScript types)             │
 │  ├─ 🧠 Business Logic (Hooks + Validation + Navigation)                     │
-│  ├─ 🎨 UI Components (NativeWind + Responsive + Accessibility)              │
-│  ├─ 🌐 Internationalization (TH + EN translations)                          │
+│  ├─ 🎨 UI Components (Tailwind CSS + Responsive + Accessibility)             │
 │  ├─ 🧪 Test Infrastructure (Mock APIs + Test IDs + Type safety)             │
 │  └─ 📊 Documentation (README + Component docs + API specs)                  │
 │                                                                             │
@@ -133,7 +132,6 @@ PRE-CHECK VALIDATION
     │
     ├─ .spec.json generation
     │   ├─ API endpoints & types
-    │   ├─ i18n keys (TH/EN)
     │   ├─ testID mappings
     │   └─ Validation rules
     │
@@ -152,8 +150,8 @@ IMPLEMENTATION PHASE
     │
     ├─ ui-builder
     │   ├─ Input: figma_cache + audit_results + .spec.json
-    │   ├─ Output: .tsx + .styles.ts + .types.ts + index.ts
-    │   └─ Follows: NativeWind + Component patterns
+    │   ├─ Output: .tsx + .types.ts + index.ts
+    │   └─ Follows: Tailwind CSS + Component patterns
     │
     ├─ service-builder
     │   ├─ Input: API specs + audit_results + .spec.json
@@ -175,9 +173,7 @@ POST-CHECK VALIDATION
     │
     ├─ Semantic verification
     │   ├─ Figma design fidelity
-    │   ├─ i18n completeness
-    │   ├─ testID coverage
-    │   └─ iPad responsiveness
+    │   └─ testID coverage
     │
     └─ Spec gap verification
         ├─ Dev answers applied 1:1
